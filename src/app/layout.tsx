@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import Providers from "./providers";
 import "./globals.css";
 
@@ -67,7 +69,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>
           <TooltipProvider delayDuration={150}>
-            {children}
+            <Navbar />
+            <main className="flex-1 flex flex-col">{children}</main>
+            <Footer />
             <Toaster richColors position="bottom-right" closeButton />
           </TooltipProvider>
         </Providers>
