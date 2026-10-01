@@ -9,13 +9,19 @@ import {
   Settings,
   User,
   MapPin,
+  Activity,
+  RefreshCw,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import DashboardShell from "@/components/layout/DashboardShell";
 import SidebarNav, { type SidebarNavItem } from "@/components/layout/SidebarNav";
 import { formatBDT, formatDateTime } from "@/lib/utils";
+import { useApiQuery } from "@/lib/hooks/useApiQuery";
+import { getHealth } from "@/lib/api/endpoints";
 
 const DEMO_SIDEBAR_ITEMS: SidebarNavItem[] = [
   { label: "Overview", href: "/dashboard", icon: HomeIcon, roles: ["CUSTOMER"] },
@@ -29,6 +35,20 @@ const DEMO_SIDEBAR_ITEMS: SidebarNavItem[] = [
 ];
 
 export default function CustomerDashboardPreviewPage() {
+  const {
+    data: health,
+    isLoading: healthLoading,
+    isError: healthError,
+    refetch: healthRefetch,
+  } = useApiQuery({
+    queryKey: ["dev", "health"],
+    queryFn: getHealth,
+    retry: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
+  });
+
   return (
     <DashboardShell
       sidebarTitle="Customer"
@@ -161,6 +181,81 @@ export default function CustomerDashboardPreviewPage() {
               </tbody>
             </table>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6 border-dashed bg-muted/20">
+        <CardHeader className="pb-2 flex-row items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" />
+              Dev: Backend Health Check
+            </CardTitle>
+            <CardDescription>
+              Verifies the typed API client + TanStack Query are wired. Uses{" "}
+              <code className="bg-muted rounded px-1 text-[11px]">GET /health</code>.
+            </CardDescription>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => healthRefetch()}
+            disabled={healthLoading}
+          >
+            <RefreshCw className="h-3.5 w-3.5 mr-2" />
+            {healthLoading ? "Checking…" : "Re-check"}
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {healthLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ) : healthError ? (
+            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+              <Badge variant="outline" className="shrink-0">
+                Not connected
+              </Badge>
+              <span>
+                Backend is offline (expected in Step 6 — we only verify the client
+                compiles + types are correct). Start backend on port 5000 and
+                click Re-check.
+              </span>
+            </div>
+          ) : health ? (
+            <div className="grid gap-2 text-sm sm:grid-cols-2 md:grid-cols-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Status
+                </p>
+                <p className="font-semibold capitalize">{health.status}</p>
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Environment
+                </p>
+                <p className="font-semibold">{health.environment ?? "—"}</p>
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Uptime
+                </p>
+                <p className="font-semibold">
+                  {health.uptime ? `${(health.uptime / 60).toFixed(1)} min` : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Timestamp
+                </p>
+                <p className="font-semibold text-xs">
+                  {formatDateTime(health.timestamp)}
+                </p>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </DashboardShell>
