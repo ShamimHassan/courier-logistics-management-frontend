@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Bell,
@@ -29,22 +29,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useAuthStore, selectIsAuthenticated } from "@/store/useAuthStore";
+import { getRoleHome } from "@/store/useAuthStore";
+import type { Role } from "@/lib/api/types";
 
-export type UserRole = "CUSTOMER" | "COURIER" | "ADMIN" | null;
-
-export interface SessionUser {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  avatar?: string;
-}
-
-interface NavbarProps {
-  user?: SessionUser | null;
-  unreadNotificationCount?: number;
-  onLogout?: () => void;
-}
+type NavbarRole = Role | null;
 
 const PUBLIC_LINKS: { label: string; href: string }[] = [
   { label: "Home", href: "/" },
@@ -54,18 +43,11 @@ const PUBLIC_LINKS: { label: string; href: string }[] = [
   { label: "Contact", href: "/contact" },
 ];
 
-function dashboardRouteFor(role: NonNullable<UserRole>): string {
-  switch (role) {
-    case "CUSTOMER":
-      return "/dashboard";
-    case "COURIER":
-      return "/courier";
-    case "ADMIN":
-      return "/admin";
-  }
+function dashboardRouteFor(role: NonNullable<NavbarRole>): string {
+  return getRoleHome(role);
 }
 
-function roleLabel(role: NonNullable<UserRole>): string {
+function roleLabel(role: NonNullable<NavbarRole>): string {
   switch (role) {
     case "CUSTOMER":
       return "Customer";
@@ -85,14 +67,19 @@ function initialsOf(name: string): string {
     .join("");
 }
 
-export function Navbar({
-  user = null,
-  unreadNotificationCount = 0,
-  onLogout,
-}: NavbarProps) {
+export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  const user = useAuthStore((s) => s.user);
+  const isAuthed = useAuthStore(selectIsAuthenticated);
+  const isHydrated = useAuthStore((s) => s.isHydrated);
+  const logout = useAuthStore((s) => s.logout);
+
+  const visibleUser = isAuthed && user ? user : null;
+  const unreadNotificationCount = 0;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -107,6 +94,16 @@ export function Navbar({
 
   const isPublic = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const handleLogout = async () => {
+    await logout({ silent: false, skipServer: false });
+    setSheetOpen(false);
+    router.replace("/");
+  };
+
+  const showGuest = isHydrated && !visibleUser;
+  const showAuthed = !!visibleUser;
+  const showLoading = !isHydrated;
 
   return (
     <header
@@ -154,13 +151,18 @@ export function Navbar({
 
         {/* ── Desktop actions ── */}
         <div className="hidden md:flex items-center gap-2">
-          {user ? (
+          {showLoading ? (
+            <>
+              <div className="h-9 w-9 rounded-md bg-muted animate-pulse" />
+              <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
+            </>
+          ) : showAuthed && visibleUser ? (
             <>
               <Button variant="ghost" size="icon" asChild aria-label="Notifications">
                 <Link
                   href={
-                    user.role
-                      ? `${dashboardRouteFor(user.role)}/notifications`
+                    visibleUser.role
+                      ? `${dashboardRouteFor(visibleUser.role)}/notifications`
                       : "/login"
                   }
                 >
@@ -188,22 +190,25 @@ export function Navbar({
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 h-9 px-2">
                     <Avatar className="h-8 w-8">
-                      {user.avatar ? (
+                      {visibleUser.profileImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-                        <img src={user.avatar} alt={user.name} />
+                        <img
+                          src={visibleUser.profileImageUrl}
+                          alt={visibleUser.name}
+                        />
                       ) : (
                         <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                          {initialsOf(user.name)}
+                          {initialsOf(visibleUser.name)}
                         </AvatarFallback>
                       )}
                     </Avatar>
                     <div className="text-left leading-tight hidden sm:block">
                       <div className="text-sm font-semibold">
-                        {user.name.split(" ")[0]}
+                        {visibleUser.name.split(" ")[0]}
                       </div>
-                      {user.role ? (
+                      {visibleUser.role ? (
                         <div className="text-[11px] text-muted-foreground">
-                          {roleLabel(user.role)}
+                          {roleLabel(visibleUser.role)}
                         </div>
                       ) : null}
                     </div>
@@ -213,36 +218,37 @@ export function Navbar({
                 <DropdownMenuContent align="end" className="w-64">
                   <DropdownMenuLabel>
                     <div className="flex flex-col">
-                      <span className="font-semibold">{user.name}</span>
+                      <span className="font-semibold">{visibleUser.name}</span>
                       <span className="text-xs text-muted-foreground font-normal">
-                        {user.email}
+                        {visibleUser.email}
                       </span>
+                      {visibleUser.phone ? (
+                        <span className="text-xs text-muted-foreground font-normal">
+                          {visibleUser.phone}
+                        </span>
+                      ) : null}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {user.role ? (
+                  {visibleUser.role ? (
                     <>
                       <DropdownMenuGroup>
                         <DropdownMenuItem asChild>
-                          <Link href={dashboardRouteFor(user.role)}>
+                          <Link href={dashboardRouteFor(visibleUser.role)}>
                             <Package className="h-4 w-4 mr-2" />
-                            {roleLabel(user.role)} Dashboard
+                            {roleLabel(visibleUser.role)} Dashboard
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          asChild
-                        >
+                        <DropdownMenuItem asChild>
                           <Link
-                            href={`${dashboardRouteFor(user.role)}/profile`}
+                            href={`${dashboardRouteFor(visibleUser.role)}/profile`}
                           >
                             Profile
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          asChild
-                        >
+                        <DropdownMenuItem asChild>
                           <Link
-                            href={`${dashboardRouteFor(user.role)}/notifications`}
+                            href={`${dashboardRouteFor(visibleUser.role)}/notifications`}
                           >
                             Notifications
                             {unreadNotificationCount ? (
@@ -256,22 +262,16 @@ export function Navbar({
                       <DropdownMenuSeparator />
                     </>
                   ) : null}
-                  {onLogout ? (
-                    <DropdownMenuItem
-                      onClick={onLogout}
-                      className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                    >
-                      Log out
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem asChild>
-                      <Link href="/login">Log in</Link>
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  >
+                    Log out
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
-          ) : (
+          ) : showGuest ? (
             <>
               <Button asChild variant="ghost" size="sm">
                 <Link href="/login">Log in</Link>
@@ -283,7 +283,7 @@ export function Navbar({
                 </Link>
               </Button>
             </>
-          )}
+          ) : null}
         </div>
 
         {/* ── Mobile trigger ── */}
@@ -337,29 +337,40 @@ export function Navbar({
 
             <Separator className="my-4" />
 
-            {user ? (
+            {showLoading ? (
+              <div className="space-y-2">
+                <div className="h-16 rounded-xl bg-muted animate-pulse" />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="h-9 rounded-md bg-muted animate-pulse" />
+                  <div className="h-9 rounded-md bg-muted animate-pulse" />
+                </div>
+              </div>
+            ) : showAuthed && visibleUser ? (
               <>
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border">
                   <Avatar className="h-10 w-10">
-                    {user.avatar ? (
+                    {visibleUser.profileImageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-                      <img src={user.avatar} alt={user.name} />
+                      <img
+                        src={visibleUser.profileImageUrl}
+                        alt={visibleUser.name}
+                      />
                     ) : (
                       <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                        {initialsOf(user.name)}
+                        {initialsOf(visibleUser.name)}
                       </AvatarFallback>
                     )}
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">
-                      {user.name}
+                      {visibleUser.name}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {user.email}
+                      {visibleUser.email}
                     </p>
-                    {user.role ? (
+                    {visibleUser.role ? (
                       <Badge variant="outline" className="mt-1 text-[10px]">
-                        {roleLabel(user.role)}
+                        {roleLabel(visibleUser.role)}
                       </Badge>
                     ) : null}
                   </div>
@@ -367,15 +378,21 @@ export function Navbar({
 
                 <div className="grid grid-cols-2 gap-2 mt-3">
                   <Button asChild variant="outline" size="sm">
-                    <Link href={user.role ? dashboardRouteFor(user.role) : "/login"}>
+                    <Link
+                      href={
+                        visibleUser.role
+                          ? dashboardRouteFor(visibleUser.role)
+                          : "/login"
+                      }
+                    >
                       Dashboard
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm">
                     <Link
                       href={
-                        user.role
-                          ? `${dashboardRouteFor(user.role)}/notifications`
+                        visibleUser.role
+                          ? `${dashboardRouteFor(visibleUser.role)}/notifications`
                           : "/login"
                       }
                     >
@@ -387,15 +404,11 @@ export function Navbar({
                       ) : null}
                     </Link>
                   </Button>
-                  <Button
-                    asChild
-                    size="sm"
-                    className="col-span-2"
-                  >
+                  <Button asChild size="sm" className="col-span-2">
                     <Link
                       href={
-                        user.role
-                          ? `${dashboardRouteFor(user.role)}/profile`
+                        visibleUser.role
+                          ? `${dashboardRouteFor(visibleUser.role)}/profile`
                           : "/login"
                       }
                     >
@@ -404,18 +417,16 @@ export function Navbar({
                   </Button>
                 </div>
 
-                {onLogout ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onLogout}
-                    className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive mt-3"
-                  >
-                    Log out
-                  </Button>
-                ) : null}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive mt-3"
+                >
+                  Log out
+                </Button>
               </>
-            ) : (
+            ) : showGuest ? (
               <div className="grid gap-2">
                 <Button asChild size="sm">
                   <Link href="/register">Create account</Link>
@@ -424,7 +435,7 @@ export function Navbar({
                   <Link href="/login">Log in</Link>
                 </Button>
               </div>
-            )}
+            ) : null}
           </SheetContent>
         </Sheet>
       </div>

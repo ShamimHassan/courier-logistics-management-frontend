@@ -5,20 +5,20 @@ import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { UserRole } from "./Navbar";
+import type { Role } from "@/lib/api/types";
 
 export interface SidebarNavItem {
   label: string;
   href: string;
   icon: LucideIcon;
-  roles?: NonNullable<UserRole>[];
+  roles?: Role[];
   badge?: string | number;
   variant?: "default" | "destructive" | "outline" | "secondary";
 }
 
 interface SidebarNavProps {
   items: SidebarNavItem[];
-  role?: UserRole;
+  role?: Role | null;
   title?: string;
   footerSlot?: React.ReactNode;
 }
