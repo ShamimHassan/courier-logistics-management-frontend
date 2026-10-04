@@ -16,6 +16,11 @@ import type {
   RegisterInput,
   DemoLoginInput,
 } from "@/lib/validations/auth";
+import {
+  clearDocumentAuthCookies,
+  setDocumentAuthCookies,
+  signAuthCookies,
+} from "@/lib/cookies";
 
 export interface AuthTokens {
   accessToken: string;
@@ -99,6 +104,24 @@ const initialState = {
   isAuthenticating: false,
 };
 
+async function syncAuthCookiesForUser(user: User | null): Promise<void> {
+  if (typeof window === "undefined") return;
+  if (!user) {
+    clearDocumentAuthCookies();
+    return;
+  }
+  try {
+    const cookies = await signAuthCookies({
+      role: user.role,
+      userId: user.id,
+      email: user.email,
+    });
+    setDocumentAuthCookies(cookies);
+  } catch (err) {
+    console.error("[auth-store] Failed to sync auth cookies", err);
+  }
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -119,6 +142,7 @@ export const useAuthStore = create<AuthState>()(
             tokens,
             isAuthenticating: false,
           });
+          await syncAuthCookiesForUser(res.user);
           return { ok: true, user: res.user };
         } catch (err) {
           set({ isAuthenticating: false });
@@ -141,6 +165,7 @@ export const useAuthStore = create<AuthState>()(
             tokens: demoTokens,
             isAuthenticating: false,
           });
+          await syncAuthCookiesForUser(demoUser);
           toast.success(`Signed in as ${demoUser.name} (${role})`, {
             description: "One-click demo mode: data is client-side only.",
           });
@@ -166,6 +191,7 @@ export const useAuthStore = create<AuthState>()(
             tokens,
             isAuthenticating: false,
           });
+          await syncAuthCookiesForUser(res.user);
           return { ok: true, user: res.user };
         } catch (err) {
           set({ isAuthenticating: false });
@@ -194,13 +220,19 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      setUser: (user) => set({ user }),
+      setUser: (user) => {
+        set({ user });
+        void syncAuthCookiesForUser(user);
+      },
 
-      setAuth: ({ user, tokens }) =>
+      setAuth: ({ user, tokens }) => {
+        const nextTokens = { ...tokens, issuedAt: tokens.issuedAt ?? Date.now() };
         set({
           user,
-          tokens: { ...tokens, issuedAt: tokens.issuedAt ?? Date.now() },
-        }),
+          tokens: nextTokens,
+        });
+        void syncAuthCookiesForUser(user);
+      },
 
       updateTokens: (tokens) =>
         set({
@@ -212,6 +244,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const user = await getMe();
           set({ user });
+          void syncAuthCookiesForUser(user);
           return user;
         } catch {
           return null;
@@ -221,6 +254,7 @@ export const useAuthStore = create<AuthState>()(
       logout: async (opts = {}) => {
         const { silent = false, skipServer = false } = opts;
         const tokens = get().tokens;
+        clearDocumentAuthCookies();
         if (!skipServer && tokens?.refreshToken) {
           try {
             await apiLogout({ refreshToken: tokens.refreshToken }).catch(
@@ -267,6 +301,8 @@ export const useAuthStore = create<AuthState>()(
           }
           setTimeout(() => {
             useAuthStore.setState({ isHydrated: true });
+            const current = useAuthStore.getState();
+            if (current.user) void syncAuthCookiesForUser(current.user);
           }, 0);
         };
       },

@@ -11,6 +11,8 @@ import {
   MapPin,
   Activity,
   RefreshCw,
+  Sparkles,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import DashboardShell from "@/components/layout/DashboardShell";
 import SidebarNav, { type SidebarNavItem } from "@/components/layout/SidebarNav";
+import QuickShipWizard from "@/components/shipments/QuickShipWizard";
+import { toast } from "sonner";
 import { formatBDT, formatDateTime } from "@/lib/utils";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { getHealth } from "@/lib/api/endpoints";
@@ -49,6 +53,8 @@ export default function CustomerDashboardPreviewPage() {
     staleTime: 60_000,
   });
 
+  const [showWizard, setShowWizard] = useState(true);
+
   return (
     <DashboardShell
       sidebarTitle="Customer"
@@ -78,6 +84,67 @@ export default function CustomerDashboardPreviewPage() {
         </div>
       }
     >
+      {showWizard ? (
+        <Card className="mb-6 border-primary/40 bg-gradient-to-br from-primary/[0.04] via-background to-indigo-500/[0.03] shadow-md overflow-hidden">
+          <CardHeader className="py-4 px-5 flex-row items-center justify-between gap-3 border-b border-primary/15">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="h-8 w-8 shrink-0 rounded-lg bg-gradient-to-br from-primary to-indigo-500 text-primary-foreground flex items-center justify-center shadow-sm">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div className="space-y-0 min-w-0">
+                <CardTitle className="text-sm sm:text-base font-bold tracking-tight flex items-center gap-2">
+                  Quick-ship wizard
+                  <Badge variant="default" className="text-[10px] px-2 py-0">
+                    New
+                  </Badge>
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm truncate">
+                  Book, price &amp; pay for a shipment in under 60 seconds — 5 guided steps.
+                </CardDescription>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Dismiss quick-ship wizard"
+              onClick={() => setShowWizard(false)}
+              className="shrink-0"
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </CardHeader>
+          <CardContent className="p-5 sm:p-6">
+            <QuickShipWizard
+              onSuccess={(shipment) => {
+                toast(`Shipment ${shipment.trackingNumber} created`, {
+                  description: "Redirecting to SSLCommerz checkout…",
+                });
+              }}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="mb-6 border-dashed bg-muted/20">
+          <CardContent className="p-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <PlusCircle className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="font-semibold">Quick-ship wizard</div>
+                <div className="text-xs text-muted-foreground">
+                  Collapsed — click to create a new shipment from scratch.
+                </div>
+              </div>
+            </div>
+            <Button size="sm" onClick={() => setShowWizard(true)}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Open wizard
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
