@@ -44,6 +44,7 @@ import { Label } from "@/components/ui/label";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 import { useAuthStore, getRoleHome, selectIsAuthenticated } from "@/store/useAuthStore";
 import { ApiRequestError } from "@/lib/api/client";
+import DemoLoginCard from "@/components/auth/DemoLoginCard";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -213,7 +214,7 @@ export default function LoginForm() {
                           onClick={() =>
                             toast.info("Password recovery coming soon", {
                               description:
-                                "For the demo, use your registered credentials or one of the quick demo login buttons.",
+                                "For the demo, use your registered credentials or one of the quick demo login buttons above.",
                             })
                           }
                           className="text-xs font-medium text-primary hover:underline"
@@ -331,6 +332,8 @@ export default function LoginForm() {
             </Form>
           </CardContent>
         </Card>
+
+        <DemoLoginCard />
 
         <p className="text-center text-xs text-muted-foreground">
           CourierFlow demo · SSLCommerz sandbox mode ·{" "}
