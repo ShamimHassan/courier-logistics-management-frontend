@@ -1,44 +1,28 @@
 "use client";
 
 import {
-  Bell,
   CreditCard,
-  Home as HomeIcon,
+  MapPin,
   Package,
   PlusCircle,
-  Settings,
-  User,
-  MapPin,
-  Activity,
-  RefreshCw,
   Sparkles,
   X,
+  Activity,
+  RefreshCw,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import DashboardShell from "@/components/layout/DashboardShell";
-import SidebarNav, { type SidebarNavItem } from "@/components/layout/SidebarNav";
 import QuickShipWizard from "@/components/shipments/QuickShipWizard";
 import { toast } from "sonner";
 import { formatBDT, formatDateTime } from "@/lib/utils";
 import { useApiQuery } from "@/lib/hooks/useApiQuery";
 import { getHealth } from "@/lib/api/endpoints";
 
-const DEMO_SIDEBAR_ITEMS: SidebarNavItem[] = [
-  { label: "Overview", href: "/dashboard", icon: HomeIcon, roles: ["CUSTOMER"] },
-  { label: "My Shipments", href: "/dashboard/shipments", icon: Package, roles: ["CUSTOMER"], badge: 12 },
-  { label: "Create Shipment", href: "/dashboard/shipments/new", icon: PlusCircle, roles: ["CUSTOMER"] },
-  { label: "Pricing Calculator", href: "/dashboard/pricing", icon: CreditCard, roles: ["CUSTOMER"] },
-  { label: "Track & Trace", href: "/dashboard/track", icon: MapPin, roles: ["CUSTOMER"] },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell, roles: ["CUSTOMER", "COURIER", "ADMIN"], badge: 3 },
-  { label: "Profile", href: "/dashboard/profile", icon: User, roles: ["CUSTOMER", "COURIER", "ADMIN"] },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings, roles: ["CUSTOMER", "COURIER", "ADMIN"] },
-];
-
-export default function CustomerDashboardPreviewPage() {
+export default function CustomerDashboardPage() {
   const {
     data: health,
     isLoading: healthLoading,
@@ -56,34 +40,7 @@ export default function CustomerDashboardPreviewPage() {
   const [showWizard, setShowWizard] = useState(true);
 
   return (
-    <DashboardShell
-      sidebarTitle="Customer"
-      sidebar={
-        <SidebarNav
-          items={DEMO_SIDEBAR_ITEMS}
-          role="CUSTOMER"
-          title="Customer Workspace"
-        />
-      }
-      headerSlot={
-        <div className="flex w-full items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-col">
-            <h1 className="text-base font-semibold tracking-tight sm:text-lg">
-              Welcome back, Shamim 👋
-            </h1>
-            <p className="truncate text-xs text-muted-foreground sm:text-sm">
-              Here&apos;s your CourierFlow summary for today.
-            </p>
-          </div>
-          <Button size="sm" asChild>
-            <a href="/dashboard/shipments/new">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              New shipment
-            </a>
-          </Button>
-        </div>
-      }
-    >
+    <>
       {showWizard ? (
         <Card className="mb-6 border-primary/40 bg-gradient-to-br from-primary/[0.04] via-background to-indigo-500/[0.03] shadow-md overflow-hidden">
           <CardHeader className="py-4 px-5 flex-row items-center justify-between gap-3 border-b border-primary/15">
@@ -125,9 +82,9 @@ export default function CustomerDashboardPreviewPage() {
         </Card>
       ) : (
         <Card className="mb-6 border-dashed bg-muted/20">
-          <CardContent className="p-4 flex items-center justify-between gap-3">
+          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3 text-sm">
-              <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <PlusCircle className="h-4 w-4" />
               </div>
               <div>
@@ -200,56 +157,106 @@ export default function CustomerDashboardPreviewPage() {
         </Card>
       </div>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">Recent shipments</CardTitle>
-          <CardDescription>
-            Dashboard shell preview — sidebar, header &amp; KPI cards wired.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border overflow-x-auto">
-            <table className="w-full text-sm min-w-[720px]">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left px-4 py-3 font-semibold">Tracking ID</th>
-                  <th className="text-left px-4 py-3 font-semibold">Destination</th>
-                  <th className="text-left px-4 py-3 font-semibold">Status</th>
-                  <th className="text-right px-4 py-3 font-semibold">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {[
-                  { id: "CFY20261001DH8821", to: "Chattogram", status: "IN_TRANSIT", amount: 220 },
-                  { id: "CFY20260930SY5510", to: "Sylhet", status: "DELIVERED", amount: 380 },
-                  { id: "CFY20260929RA1088", to: "Rajshahi", status: "PICKED_UP", amount: 180 },
-                ].map((row) => (
-                  <tr key={row.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-3 font-mono text-xs">{row.id}</td>
-                    <td className="px-4 py-3">{row.to}</td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant={
-                          row.status === "DELIVERED"
-                            ? "secondary"
-                            : row.status === "IN_TRANSIT"
-                              ? "default"
-                              : "outline"
-                        }
-                      >
-                        {row.status.replace("_", " ")}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold">
-                      {formatBDT(row.amount)}
-                    </td>
+      <div className="grid gap-4 mt-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <Card>
+          <CardHeader className="flex-row items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-base">Recent shipments</CardTitle>
+              <CardDescription>
+                Last 3 shipments — data preview for Customer dashboard shell.
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard/shipments">
+                <Package className="h-3.5 w-3.5 mr-2" />
+                View all
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg border overflow-x-auto">
+              <table className="w-full text-sm min-w-[560px]">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-semibold">Tracking ID</th>
+                    <th className="text-left px-4 py-3 font-semibold">Destination</th>
+                    <th className="text-left px-4 py-3 font-semibold">Status</th>
+                    <th className="text-right px-4 py-3 font-semibold">Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody className="divide-y">
+                  {[
+                    { id: "CFY20261001DH8821", to: "Chattogram", status: "IN_TRANSIT", amount: 220 },
+                    { id: "CFY20260930SY5510", to: "Sylhet", status: "DELIVERED", amount: 380 },
+                    { id: "CFY20260929RA1088", to: "Rajshahi", status: "PICKED_UP", amount: 180 },
+                  ].map((row) => (
+                    <tr key={row.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3 font-mono text-xs">{row.id}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                          {row.to}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant={
+                            row.status === "DELIVERED"
+                              ? "secondary"
+                              : row.status === "IN_TRANSIT"
+                                ? "default"
+                                : "outline"
+                          }
+                        >
+                          {row.status.replace("_", " ")}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold">
+                        {formatBDT(row.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Quick actions</CardTitle>
+              <CardDescription>Shortcuts you&apos;ll use most</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-2">
+              <Button asChild variant="outline" className="justify-start gap-2">
+                <Link href="/dashboard/shipments/new">
+                  <PlusCircle className="h-4 w-4" />
+                  Book new shipment
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="justify-start gap-2">
+                <Link href="/dashboard/track">
+                  <MapPin className="h-4 w-4" />
+                  Track a package
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="justify-start gap-2">
+                <Link href="/pricing">
+                  <CreditCard className="h-4 w-4" />
+                  Pricing calculator
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="justify-start gap-2">
+                <Link href="/dashboard/profile">
+                  <CreditCard className="h-4 w-4" />
+                  Update profile
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       <Card className="mt-6 border-dashed bg-muted/20">
         <CardHeader className="pb-2 flex-row items-center justify-between gap-3">
@@ -286,8 +293,8 @@ export default function CustomerDashboardPreviewPage() {
                 Not connected
               </Badge>
               <span>
-                Backend is offline (expected in Step 6 — we only verify the client
-                compiles + types are correct). Start backend on port 5000 and
+                Backend is offline (expected during dev shell setup — we only verify the
+                client compiles + types are correct). Start backend on port 5000 and
                 click Re-check.
               </span>
             </div>
@@ -325,6 +332,6 @@ export default function CustomerDashboardPreviewPage() {
           ) : null}
         </CardContent>
       </Card>
-    </DashboardShell>
+    </>
   );
 }
