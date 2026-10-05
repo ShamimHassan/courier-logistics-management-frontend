@@ -943,7 +943,7 @@ function StepService({ form, quote, quoteLoading, quoteError }: StepProps) {
         control={form.control}
         name="serviceType"
         render={({ field }) => (
-          <FormItem spaceY="none">
+          <FormItem>
             <FormControl>
               <RadioGroup
                 onValueChange={field.onChange as (v: string) => void}
@@ -1466,7 +1466,7 @@ export default function QuickShipWizard({
 }: QuickShipWizardProps) {
   const router = useRouter();
   const form = useForm<QuickShipWizardInput>({
-    resolver: zodResolver(wizardSchema),
+    resolver: zodResolver(wizardSchema) as unknown as never,
     defaultValues: DEFAULT_VALUES,
     mode: "onTouched",
     delayError: 200,

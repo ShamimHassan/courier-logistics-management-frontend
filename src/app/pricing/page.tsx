@@ -160,9 +160,7 @@ export default function PricingPage() {
   const zoneOptions = useMemo(buildZoneOptions, []);
 
   const form = useForm<QuoteInput>({
-    resolver: zodResolver(quoteSchema) as unknown as Parameters<
-      typeof useForm<QuoteInput>
-    >[0]["resolver"],
+    resolver: zodResolver(quoteSchema) as unknown as never,
     defaultValues: {
       weightKg: 1,
       lengthCm: undefined,
