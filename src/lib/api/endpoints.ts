@@ -90,8 +90,68 @@ export const changePassword = (body: ChangePasswordInput) =>
   apiFetch<{ updated: boolean }>("/users/me/password", { method: "PATCH", body });
 
 // ============== Couriers ==============
+
+export interface CourierMeResponse {
+  profile: CourierProfile & {
+    available?: boolean;
+    averageRating?: number | null;
+    totalRatings?: number | null;
+    totalDeliveries?: number | null;
+    totalEarnings?: number | null;
+    earningsSummary?: { totalEarnings: number; completedDeliveries: number };
+    serviceZones?: Array<{
+      id: string;
+      isPrimary: boolean;
+      zone: { id: string; name: string; code: string; city?: string | null; region?: string | null };
+    }>;
+    recentAssignments?: Array<{
+      id: string;
+      status: string;
+      earnings?: number | null;
+      assignedAt?: string | null;
+      shipment?: {
+        trackingNumber: string;
+        status: string;
+        serviceType: string;
+        senderAddress?: { city?: string | null; street?: string | null } | null;
+        recipientAddress?: { city?: string | null; street?: string | null } | null;
+      } | null;
+    }>;
+  };
+}
+
+export interface CourierEarningsDeliveryEntry {
+  assignmentId: string;
+  trackingNumber: string;
+  serviceType: string;
+  shipmentAmount: number;
+  courierEarning: number;
+  completedAt: string | null;
+}
+
+export interface CourierEarningsMeta {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface CourierEarningsSummaryShape {
+  totalDeliveries: number;
+  totalEarnings: number;
+  thisWeek: number;
+  thisMonth: number;
+  averagePerDelivery: number;
+}
+
+export interface CourierEarningsResponse {
+  deliveries: CourierEarningsDeliveryEntry[];
+  meta: CourierEarningsMeta;
+  summary: CourierEarningsSummaryShape;
+}
+
 export const getCourierMe = () =>
-  apiFetch<CourierProfile & { user: User }>("/couriers/me", { method: "GET" });
+  apiFetch<CourierMeResponse>("/couriers/me", { method: "GET" });
 
 export const getCourierEarnings = (query?: {
   fromDate?: string;
@@ -99,14 +159,7 @@ export const getCourierEarnings = (query?: {
   page?: number;
   limit?: number;
 }) =>
-  apiFetch<
-    CourierEarningsSummary & {
-      entries: CourierEarningsEntry[];
-      page: number;
-      limit: number;
-      totalEntries: number;
-    }
-  >("/couriers/me/earnings", { method: "GET", query });
+  apiFetch<CourierEarningsResponse>("/couriers/me/earnings", { method: "GET", query });
 
 export const setCourierAvailability = (body: { available: boolean; reason?: string }) =>
   apiFetch<{ isAvailable: boolean }>("/couriers/me/availability", {
@@ -322,6 +375,17 @@ export const adminRbacSmokeTest = () =>
   apiFetch<{ role: Role; authorized: true }>("/admin/test", { method: "GET" });
 
 // ============== Assignments ==============
+
+export const getMyAssignments = (query?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}) =>
+  apiFetch<PaginatedData<CourierAssignment>>("/assignments/my", {
+    method: "GET",
+    query,
+  });
+
 export const acceptAssignment = (id: string) =>
   apiFetch<{ id: string; status: "ACCEPTED" }>(`/assignments/${id}/accept`, {
     method: "PATCH",
