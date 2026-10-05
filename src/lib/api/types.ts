@@ -444,19 +444,41 @@ export interface AuditLog {
 }
 
 export interface DashboardStats {
-  totalShipments: number;
-  activeShipments: number;
-  deliveredToday: number;
-  cancelledToday: number;
-  totalRevenue: number;
-  pendingPayments: number;
-  totalCouriers: number;
-  availableCouriers: number;
-  totalCustomers: number;
-  averageDeliveryHours: number;
-  onTimeRatePercent: number;
-  refundRatePercent: number;
-  lastUpdatedAt: string;
+  // Actual shape returned by GET /admin/dashboard-stats
+  shipments: {
+    total: number;
+    inTransit: number;
+    delivered: number;
+    failed: number;
+  };
+  revenue: {
+    today: number;
+    thisWeek: number;
+    thisMonth: number;
+  };
+  couriers: {
+    active: number;
+    available: number;
+    busy: number;
+  };
+  delivery: {
+    successRate: number;
+    totalAttempts: number;
+  };
+  // Legacy flat fields kept for backwards compat (may not be present)
+  totalShipments?: number;
+  activeShipments?: number;
+  deliveredToday?: number;
+  cancelledToday?: number;
+  totalRevenue?: number;
+  pendingPayments?: number;
+  totalCouriers?: number;
+  availableCouriers?: number;
+  totalCustomers?: number;
+  averageDeliveryHours?: number;
+  onTimeRatePercent?: number;
+  refundRatePercent?: number;
+  lastUpdatedAt?: string;
 }
 
 export interface CourierEarningsSummary {
