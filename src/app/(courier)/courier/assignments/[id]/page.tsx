@@ -959,7 +959,7 @@ function CourierActionPanel({
             );
           })}
 
-          {/* Delivery attempt placeholder — step 22 */}
+          {/* Delivery attempt — step 22 */}
           {canAttemptDelivery && (
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
               <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -969,14 +969,14 @@ function CourierActionPanel({
                     Record Delivery Attempt
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Mark as DELIVERED (with proof) or FAILED (with reason).
-                    Implemented in Step 22.
+                    Mark as DELIVERED (with photo proof) or FAILED (with
+                    reason &amp; notes).
                   </p>
                 </div>
                 <Link href={`/courier/assignments/${shipment.id}/deliver`}>
-                  <Button size="sm" className="shrink-0">
+                  <Button size="sm" className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white">
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                    Deliver
+                    Deliver / Attempt
                   </Button>
                 </Link>
               </div>
