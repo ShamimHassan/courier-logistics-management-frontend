@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -871,9 +872,11 @@ export default function ShipmentDetailPage() {
               ) : shipment?.courier ? (
                 <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20">
                   {shipment.courier.profileImageUrl ? (
-                    <img
+                    <Image
                       src={shipment.courier.profileImageUrl}
                       alt={shipment.courier.name}
+                      width={44}
+                      height={44}
                       className="h-11 w-11 rounded-full object-cover border border-border"
                     />
                   ) : (

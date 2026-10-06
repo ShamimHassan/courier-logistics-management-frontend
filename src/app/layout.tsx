@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
@@ -17,6 +17,16 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#151b2e" },
+  ],
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -72,9 +82,16 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>
           <TooltipProvider delayDuration={150}>
+            {/* Skip-to-content for keyboard / screen reader accessibility */}
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:text-sm focus:font-semibold focus:shadow-lg"
+            >
+              Skip to main content
+            </a>
             <AuthAdapterRegistrar />
             <Navbar />
-            <main className="flex-1 flex flex-col">{children}</main>
+            <main id="main-content" className="flex-1 flex flex-col">{children}</main>
             <Footer />
             <Toaster richColors position="bottom-right" closeButton />
           </TooltipProvider>
