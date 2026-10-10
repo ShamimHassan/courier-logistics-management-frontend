@@ -22,6 +22,7 @@
 
 # Markdown docs
 *.md
+!README.md
 
 # Environment files
 .env
