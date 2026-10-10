@@ -142,12 +142,12 @@ function EarningsTooltip({
   label,
 }: {
   active?: boolean;
-  payload?: Array<{ value: number; name: string }>;
+  payload?: Array<{ value: number | string; name: string }>;
   label?: string;
 }) {
   if (!active || !payload?.length) return null;
-  const earnings = payload.find((p) => p.name === "earnings")?.value ?? 0;
-  const deliveries = payload.find((p) => p.name === "deliveries")?.value ?? 0;
+  const earnings = Number(payload.find((p) => p.name === "earnings")?.value ?? 0);
+  const deliveries = Number(payload.find((p) => p.name === "deliveries")?.value ?? 0);
   return (
     <div className="rounded-xl border bg-card/95 backdrop-blur-sm shadow-lg p-3 text-sm space-y-1.5">
       <p className="font-semibold text-foreground">{label}</p>
@@ -509,8 +509,8 @@ export default function CourierEarningsPage() {
                   tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v: number) =>
-                    v >= 1000 ? `৳${(v / 1000).toFixed(1)}k` : `৳${v}`
+                  tickFormatter={(v) =>
+                    Number(v) >= 1000 ? `৳${(Number(v) / 1000).toFixed(1)}k` : `৳${Number(v)}`
                   }
                   width={52}
                 />

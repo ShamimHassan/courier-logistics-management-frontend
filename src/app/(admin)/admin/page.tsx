@@ -75,9 +75,9 @@ function ChartTooltip({
   formatter,
 }: {
   active?: boolean;
-  payload?: Array<{ value: number; name: string; color?: string }>;
+  payload?: Array<{ value: number | string; name: string; color?: string }>;
   label?: string;
-  formatter?: (v: number) => string;
+  formatter?: (v: number | string) => string;
 }) {
   if (!active || !payload?.length) return null;
   return (
@@ -480,13 +480,13 @@ export default function AdminDashboardPage() {
                     tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(v: number) => `৳${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={(v) => `৳${(Number(v) / 1000).toFixed(0)}k`}
                     width={40}
                   />
                   <Tooltip
                     content={
                       <ChartTooltip
-                        formatter={(v) => formatBDT(v)}
+                        formatter={(v) => formatBDT(Number(v))}
                       />
                     }
                   />
@@ -538,7 +538,7 @@ export default function AdminDashboardPage() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(v: number) => [v.toLocaleString(), ""]}
+                      formatter={(v) => [Number(v).toLocaleString(), ""]}
                     />
                   </PieChart>
                 </ResponsiveContainer>

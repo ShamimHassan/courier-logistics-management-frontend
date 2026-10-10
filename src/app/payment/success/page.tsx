@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -13,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-/* Simple CSS confetti burst on mount */
 function ConfettiBurst() {
   const pieces = React.useMemo(() => {
     return Array.from({ length: 18 }, (_, i) => ({
@@ -50,10 +50,9 @@ function ConfettiBurst() {
   );
 }
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
 
-  /* SSLCommerz passes these as query params after redirect */
   const tranId = searchParams.get("tran_id") ?? searchParams.get("tranId") ?? null;
   const valId = searchParams.get("val_id") ?? null;
   const shipmentId = searchParams.get("shipmentId") ?? searchParams.get("shipment_id") ?? null;
@@ -65,16 +64,13 @@ export default function PaymentSuccessPage() {
         <ConfettiBurst />
 
         <Card className="border-emerald-500/30 shadow-xl relative overflow-hidden">
-          {/* Decorative top band */}
           <div className="h-1.5 w-full bg-linear-to-r from-emerald-400 via-teal-400 to-cyan-400" />
 
           <CardContent className="pt-10 pb-8 flex flex-col items-center text-center gap-5">
-            {/* Icon */}
             <div className="h-20 w-20 rounded-full bg-emerald-500/15 flex items-center justify-center ring-4 ring-emerald-500/20">
               <CheckCircle2 className="h-10 w-10 text-emerald-500" />
             </div>
 
-            {/* Heading */}
             <div className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight text-emerald-700 dark:text-emerald-300">
                 Payment Successful!
@@ -85,7 +81,6 @@ export default function PaymentSuccessPage() {
               </p>
             </div>
 
-            {/* Details */}
             {(tranId || valId || amount) && (
               <div className="w-full rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-left space-y-2.5">
                 {tranId && (
@@ -114,7 +109,6 @@ export default function PaymentSuccessPage() {
 
             <Separator />
 
-            {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-3 w-full">
               {shipmentId ? (
                 <Button asChild className="flex-1">
@@ -139,5 +133,17 @@ export default function PaymentSuccessPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }

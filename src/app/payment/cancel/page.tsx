@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, CreditCard, XCircle } from "lucide-react";
@@ -11,13 +12,12 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-export default function PaymentCancelPage() {
+function PaymentCancelContent() {
   const searchParams = useSearchParams();
 
   const tranId = searchParams.get("tran_id") ?? searchParams.get("tranId") ?? null;
   const shipmentId = searchParams.get("shipmentId") ?? searchParams.get("shipment_id") ?? null;
 
-  /* Build retry URL — go back to the shipment detail which has "Pay Now" */
   const retryHref = shipmentId
     ? `/dashboard/shipments/${shipmentId}`
     : "/dashboard/shipments";
@@ -29,12 +29,10 @@ export default function PaymentCancelPage() {
           <div className="h-1.5 w-full bg-linear-to-r from-rose-400 via-orange-400 to-amber-400" />
 
           <CardContent className="pt-10 pb-8 flex flex-col items-center text-center gap-5">
-            {/* Icon */}
             <div className="h-20 w-20 rounded-full bg-rose-500/10 flex items-center justify-center ring-4 ring-rose-500/15">
               <XCircle className="h-10 w-10 text-rose-500" />
             </div>
 
-            {/* Heading */}
             <div className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">
                 Payment Cancelled
@@ -45,7 +43,6 @@ export default function PaymentCancelPage() {
               </p>
             </div>
 
-            {/* Details */}
             {tranId && (
               <div className="w-full rounded-xl border border-rose-500/15 bg-rose-500/[0.03] p-4 text-left">
                 <div className="flex items-center justify-between text-sm">
@@ -62,7 +59,6 @@ export default function PaymentCancelPage() {
 
             <Separator />
 
-            {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-3 w-full">
               <Button asChild className="flex-1">
                 <Link href={retryHref}>
@@ -81,5 +77,17 @@ export default function PaymentCancelPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function PaymentCancelPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
+      </div>
+    }>
+      <PaymentCancelContent />
+    </Suspense>
   );
 }
